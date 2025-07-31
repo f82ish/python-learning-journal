@@ -1,12 +1,13 @@
+# Student class to represent each student
 class Student:
-    # constructor – sets up each student's info when you create one
+    # Sets up each student's info
     def __init__(self, student_id, first_name, last_name, tuition_paid):
         self.student_id = student_id
         self.first_name = first_name
         self.last_name = last_name
         self.tuition_paid = tuition_paid
 
-    # defines how to compare two students using ==
+    # Checks if two students are the same
     def __eq__(self, other):
         return (
             isinstance(other, Student) and
@@ -16,55 +17,68 @@ class Student:
             self.tuition_paid == other.tuition_paid
         )
 
-    # defines how the student shows up when printed
+    # How the student shows up when printed
     def __str__(self):
-        return f"{self.student_id} - {self.first_name} {self.last_name} | Tuition Paid: {self.tuition_paid}"
+        return f"{self.first_name} {self.last_name} (S{self.student_id})"
 
 
+# Course class to handle enrollment and waitlist
 class Course:
-    # constructor – sets up course name, limits, and empty lists
+    # Sets up course details and limits
     def __init__(self, course_name, max_roster_size, max_waitlist_size):
         self.course_name = course_name
-        self.roster = []             # students officially enrolled
-        self.waitlist = []           # students on the waitlist
+        self.roster = []
+        self.waitlist = []
         self.max_roster_size = max_roster_size
         self.max_waitlist_size = max_waitlist_size
 
-    # shows course summary and lists of students
+    # Shows course info in the expected format
     def __str__(self):
-        output = f"Course: {self.course_name}\n"
-        output += f"Enrolled ({len(self.roster)}/{self.max_roster_size}):\n"
+        output = f"{self.course_name}\n"
+        output += f"{len(self.roster)} enrolled (maximum allowed {self.max_roster_size})\n"
         for student in self.roster:
-            output += "  " + str(student) + "\n"
-
-        output += f"Waitlist ({len(self.waitlist)}/{self.max_waitlist_size}):\n"
+            output += f"\t{student}\n"
+        output += f"{len(self.waitlist)} on waitlist (maximum allowed {self.max_waitlist_size})\n"
         for student in self.waitlist:
-            output += "  " + str(student) + "\n"
-
+            output += f"\t{student}\n"
         return output
 
-    # adds a student to the course based on space and tuition status
+    # Adds a student if there's space and tuition is paid
     def add_student(self, student):
-        if student.tuition_paid:
-            if len(self.roster) < self.max_roster_size:
-                self.roster.append(student)
-            elif len(self.waitlist) < self.max_waitlist_size:
-                self.waitlist.append(student)
-        else:
-            print(f"{student.first_name} {student.last_name} can't be added. Tuition not paid.")
+        if not student.tuition_paid:
+            print(f"{student} not added")
+            return
 
-    # removes a student from roster or waitlist if they’re on either
+        if len(self.roster) < self.max_roster_size:
+            self.roster.append(student)
+            print(f"{student} added successfully")
+        elif len(self.waitlist) < self.max_waitlist_size:
+            self.waitlist.append(student)
+            print(f"{student} added to waitlist")
+        else:
+            print(f"{student} not added")
+
+    # Drops a student and promotes from waitlist if needed
     def drop_student(self, student):
         if student in self.roster:
             self.roster.remove(student)
+            print(f"{student} dropped successfully")
+            # Promote from waitlist if available
+            if self.waitlist:
+                promoted = self.waitlist.pop(0)
+                self.roster.append(promoted)
+                print(f"{promoted} moved from waitlist to roster")
         elif student in self.waitlist:
             self.waitlist.remove(student)
+            print(f"{student} dropped successfully")
+        else:
+            print(f"{student} not dropped")
 
+
+# Main program to interact with the user
 def main():
-    # set up the course with name and limits
-    course = Course("Intro to Python", max_roster_size=2, max_waitlist_size=2)
+    course = Course("Media Studies", max_roster_size=5, max_waitlist_size=5)
 
-    # menu loop
     while True:
         print("\nChoose an option:")
         print("1. Add a student")
@@ -75,34 +89,30 @@ def main():
         choice = input("Enter your choice (1-4): ")
 
         if choice == "1":
-            # Add a student
             try:
-                student_id = int(input("Student ID: "))
+                student_id = input("Student ID: ").strip().upper().lstrip("S")
+                student_id = int(student_id)
                 first = input("First name: ")
                 last = input("Last name: ")
                 paid = input("Tuition paid? (yes/no): ").strip().lower() == "yes"
-
-                new_student = Student(student_id, first, last, paid)
-                course.add_student(new_student)
+                student = Student(student_id, first, last, paid)
+                course.add_student(student)
             except ValueError:
-                print("Invalid input. Try again.")
+                print("Invalid ID. Please enter numbers only.")
 
         elif choice == "2":
-            # Drop a student
             try:
-                student_id = int(input("Student ID to drop: "))
+                student_id = input("Student ID to drop: ").strip().upper().lstrip("S")
+                student_id = int(student_id)
                 first = input("First name: ")
                 last = input("Last name: ")
-                paid = input("Tuition paid? (yes/no): ").strip().lower() == "yes"
-
-                drop_candidate = Student(student_id, first, last, paid)
-                course.drop_student(drop_candidate)
+                student = Student(student_id, first, last, True)
+                course.drop_student(student)
             except ValueError:
-                print("Invalid input. Try again.")
+                print("Invalid ID. Please enter numbers only.")
 
         elif choice == "3":
-            # Show course info
-            print(course)
+            print("\n" + str(course))
 
         elif choice == "4":
             print("Exiting...")
@@ -111,5 +121,7 @@ def main():
         else:
             print("Please enter a number from 1 to 4.")
 
+
+# Run the program
 if __name__ == "__main__":
     main()
